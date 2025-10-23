@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"time"
 
 	"lumora/internal/auth"
@@ -15,36 +16,46 @@ import (
 	"go.uber.org/fx"
 )
 
-func main() {
+// Handler is the Vercel serverless entry point
+func Handler(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+
+	var mux *http.ServeMux
+
 	app := fx.New(
 		fx.Provide(
 			config.NewConfig,
 			logger.NewLogger,
 			mongo.NewMongoClient,
 			server.NewMux,
-			server.NewServer,
 			user.NewUserRepository,
 			user.NewUserService,
 			user.NewUserHandler,
-			auth.NewGoogleAuth, // ✅ Make sure this is here
+			auth.NewGoogleAuth,
 			chat.NewChatRepository,
 			chat.NewChatService,
 		),
-		fx.Invoke(func(*server.Server) {}, chat.NewChatHandler),
+		fx.Invoke(
+			func(m *http.ServeMux) {
+				mux = m
+			},
+			chat.NewChatHandler,
+		),
 	)
 
-	startCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	startCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	if err := app.Start(startCtx); err != nil {
-		panic(err)
+		http.Error(w, "Failed to start app: "+err.Error(), http.StatusInternalServerError)
+		return
 	}
+	defer func() {
+		stopCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		_ = app.Stop(stopCtx)
+	}()
 
-	<-app.Done()
-
-	stopCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	if err := app.Stop(stopCtx); err != nil {
-		panic(err)
-	}
+	// Serve the HTTP request through the mux
+	mux.ServeHTTP(w, r)
 }
