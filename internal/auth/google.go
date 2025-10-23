@@ -32,7 +32,7 @@ type GoogleUser struct {
 }
 
 func NewGoogleAuth(userService user.Service, logger *zap.Logger) *GoogleAuth {
-	_ = godotenv.Load("../../.env") // Loads .env if it exists
+	_ = godotenv.Load("../.env") // Loads .env if it exists
 
 	return &GoogleAuth{
 		conf: &oauth2.Config{
