@@ -1,10 +1,7 @@
 package handler
 
 import (
-	"context"
 	"net/http"
-	"os"
-	"time"
 
 	"lumora/auth"
 	"lumora/chat"
@@ -13,62 +10,48 @@ import (
 	"lumora/mongo"
 	"lumora/server"
 	"lumora/user"
-
-	"go.uber.org/fx"
 )
 
-var handler http.Handler // shared between Vercel + local
+var handler http.Handler
 
-func main() {
-	app := fx.New(
-		fx.Provide(
-			config.NewConfig,
-			logger.NewLogger,
-			mongo.NewMongoClient,
-			server.NewMux, // returns *http.ServeMux
-			user.NewUserRepository,
-			user.NewUserService,
-			user.NewUserHandler,
-			auth.NewGoogleAuth,
-			chat.NewChatRepository,
-			chat.NewChatService,
-			chat.NewChatHandler,
-		),
-		fx.Invoke(func(mux *http.ServeMux) {
-			handler = mux
-		}),
-	)
-
-	// Start the app
-	startCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	if err := app.Start(startCtx); err != nil {
-		panic(err)
+// init runs automatically when the package is loaded
+func init() {
+	// Load config and logger
+	cfg := config.NewConfig()
+	log, err := logger.NewLogger()
+	if err != nil {
+		panic("Failed to create NewLogger client: " + err.Error())
 	}
 
-	// 🧩 Detect if running locally
-	if os.Getenv("VERCEL") == "" {
-		port := os.Getenv("PORT")
-		if port == "" {
-			port = "8080"
-		}
-		println("✅ Server running locally on http://localhost:" + port)
-		if err := http.ListenAndServe(":"+port, handler); err != nil {
-			panic(err)
-		}
-	} else {
-		// On Vercel, do nothing — it uses Handler() below
-		<-app.Done()
+	// Mongo client
+	mongoClient, err := mongo.NewMongoClient(nil, cfg, log)
+	if err != nil {
+		panic("Failed to create mongo client: " + err.Error())
 	}
+	// User and Auth handlers
+	userRepo := user.NewUserRepository(mongoClient)
+	userService := user.NewUserService(userRepo)
+	userHandler := user.NewUserHandler(userService, log)
+	googleAuth := auth.NewGoogleAuth(userService, log)
 
-	stopCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	if err := app.Stop(stopCtx); err != nil {
-		panic(err)
-	}
+	// Chat handler
+	chatRepo := chat.NewChatRepository(mongoClient)
+	chatService := chat.NewChatService(chatRepo)
+	chatHandler := chat.NewChatHandler(chatService, log)
+
+	// Create mux and register routes
+	mux := server.NewMux(userHandler, googleAuth, chatHandler)
+	chatHandler.RegisterRoutes(mux)
+
+	// Assign to global handler
+	handler = mux
 }
 
-// ✅ This is what Vercel calls for each HTTP request
+// Handler is what Vercel calls for each HTTP request
 func Handler(w http.ResponseWriter, r *http.Request) {
+	if handler == nil {
+		http.Error(w, "Server not initialized", http.StatusInternalServerError)
+		return
+	}
 	handler.ServeHTTP(w, r)
 }
