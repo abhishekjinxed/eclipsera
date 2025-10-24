@@ -24,7 +24,7 @@ func NewChatHandler(service Service, logger *zap.Logger) *Handler {
 	return h
 }
 func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/ws/chat/", h.HandleConnections)
+	mux.HandleFunc("/ws/chat", h.HandleConnections)
 }
 
 func (h *Handler) HandleConnections(w http.ResponseWriter, r *http.Request) {
