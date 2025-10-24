@@ -1,38 +1,31 @@
 package server
 
 import (
-	"context"
 	"net/http"
 
-	"lumora/internal/config"
-
-	"go.uber.org/fx"
-	"go.uber.org/zap"
+	"lumora/internal/auth"
+	"lumora/internal/chat"
+	"lumora/internal/user"
 )
 
-type Server = http.Server
+// NewMux builds the HTTP request multiplexer (router)
+func NewMux(
+	userHandler *user.Handler,
+	googleAuth *auth.GoogleAuth,
+	chatHandler *chat.Handler,
+) *http.ServeMux {
+	mux := http.NewServeMux()
 
-func NewServer(lc fx.Lifecycle, mux *http.ServeMux, cfg *config.Config, logger *zap.Logger) *Server {
-	srv := &http.Server{
-		Addr:    ":" + cfg.Port,
-		Handler: mux,
-	}
+	// ✅ Register routes for user, auth, and chat modules
+	userHandler.RegisterRoutes(mux)
+	googleAuth.RegisterRoutes(mux)
+	chatHandler.RegisterRoutes(mux)
 
-	lc.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			logger.Info("Starting HTTP server", zap.String("port", cfg.Port))
-			go func() {
-				if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-					logger.Fatal("Server failed", zap.Error(err))
-				}
-			}()
-			return nil
-		},
-		OnStop: func(ctx context.Context) error {
-			logger.Info("Stopping HTTP server...")
-			return srv.Shutdown(ctx)
-		},
+	// ✅ Health check
+	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("pong"))
 	})
 
-	return srv
+	return mux
 }

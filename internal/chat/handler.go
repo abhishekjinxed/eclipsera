@@ -17,11 +17,14 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-func NewChatHandler(mux *http.ServeMux, service Service, logger *zap.Logger) *Handler {
+func NewChatHandler(service Service, logger *zap.Logger) *Handler {
 	hub := NewHub()
 	h := &Handler{service: service, hub: hub, logger: logger}
-	mux.HandleFunc("/ws/chat", h.HandleConnections)
+	//mux.HandleFunc("/ws/chat", h.HandleConnections)
 	return h
+}
+func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/ws/chat/", h.HandleConnections)
 }
 
 func (h *Handler) HandleConnections(w http.ResponseWriter, r *http.Request) {
