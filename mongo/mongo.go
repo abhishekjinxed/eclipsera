@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"lumora/internal/config"
+	"lumora/config"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"

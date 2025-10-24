@@ -3,9 +3,9 @@ package server
 import (
 	"net/http"
 
-	"lumora/internal/auth"
-	"lumora/internal/chat"
-	"lumora/internal/user"
+	"lumora/auth"
+	"lumora/chat"
+	"lumora/user"
 )
 
 // NewMux builds the HTTP request multiplexer (router)

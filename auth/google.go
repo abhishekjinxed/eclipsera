@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"lumora/internal/user"
+	"lumora/user"
 	"net/http"
 	"os"
 	"strings"

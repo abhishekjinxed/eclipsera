@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"lumora/internal/user"
+	"lumora/user"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
