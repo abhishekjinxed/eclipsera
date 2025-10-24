@@ -6,13 +6,13 @@ import (
 	"os"
 	"time"
 
-	"lumora/internal/auth"
-	"lumora/internal/chat"
-	"lumora/internal/config"
-	"lumora/internal/logger"
-	"lumora/internal/mongo"
-	"lumora/internal/server"
-	"lumora/internal/user"
+	"lumora/auth"
+	"lumora/chat"
+	"lumora/config"
+	"lumora/logger"
+	"lumora/mongo"
+	"lumora/server"
+	"lumora/user"
 
 	"go.uber.org/fx"
 )
