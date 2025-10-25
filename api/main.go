@@ -24,10 +24,12 @@ func init() {
 	}
 
 	// Mongo client
-	mongoClient, err := mongo.NewMongoClient(nil, cfg, log)
+	mongoClient, err := mongo.NewMongoClient(cfg, log)
 	if err != nil {
 		panic("Failed to create mongo client: " + err.Error())
 	}
+	defer mongo.CloseMongoClient(mongoClient, log)
+
 	// User and Auth handlers
 	userRepo := user.NewUserRepository(mongoClient)
 	userService := user.NewUserService(userRepo)
