@@ -14,7 +14,8 @@ func NewConfig() *Config {
 	}
 	uri := os.Getenv("MONGO_URI")
 	if uri == "" {
-		uri = "mongodb+srv://cluster0.fhmwctr.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=Cluster0&tlsCertificateKeyFile=X509-cert-211311170312867980.pem"
+		// uri = "mongodb+srv://cluster0.fhmwctr.mongodb.net/?authSource=%24external&authMechanism=MONGODB-X509&retryWrites=true&w=majority&appName=Cluster0&tlsCertificateKeyFile=X509-cert-211311170312867980.pem"
+		uri = "mongodb+srv://lumora_admin:Asaprocky%4092@cluster0.fhmwctr.mongodb.net/?appName=Cluster0"
 	}
 	return &Config{Port: port, URI: uri}
 }
