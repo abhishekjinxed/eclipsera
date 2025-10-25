@@ -43,7 +43,7 @@ func init() {
 
 	// Create mux and register routes
 	mux := server.NewMux(userHandler, googleAuth, chatHandler)
-	chatHandler.RegisterRoutes(mux)
+	//chatHandler.RegisterRoutes(mux)
 
 	// Assign to global handler
 	handler = mux
